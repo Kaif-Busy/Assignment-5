@@ -12,7 +12,7 @@ type EmpManager struct {
 	ManagerID uint64
 }
 
-func Connect() *pg.DB {
+func ConnectToDB() *pg.DB {
 	opts := &pg.Options{
 		User:     "kaif",
 		Password: "kaif",
@@ -32,43 +32,47 @@ func Connect() *pg.DB {
 }
 
 func main() {
-	db := Connect()
+	db := ConnectToDB()
 	defer db.Close()
-	var emps []EmpManager
-	err := db.Model(&emps).Select()
+
+	var employeeManagers []EmpManager
+	err := db.Model(&employeeManagers).Select()
 	if err != nil {
 		panic(err)
 	}
-	m := make(map[uint64]uint64)
-	for _, emp := range emps {
-		m[emp.EmpID] = emp.ManagerID
-	}
-	fmt.Println("Enter the Employee and Manager Codes:")
-	var a, b uint64
-	fmt.Scan(&a, &b)
-	if x, exists := m[a]; exists && x == b {
-		temp := make(map[uint64]bool)
-		cycle := dfsDetectCycle(a, b, m, temp)
-		if cycle {
-			fmt.Println("Cycle Exists")
-		} else {
-			fmt.Println("Cycle does not Exists")
-		}
 
+	adj := make(map[uint64][]uint64)
+	for _, emp := range employeeManagers {
+		adj[emp.EmpID] = append(adj[emp.EmpID],emp.ManagerID)
+	}
+
+	fmt.Println("Enter the Employee and Manager Codes:")
+	var empID, mgrID uint64
+	fmt.Scan(&empID, &mgrID)
+
+	adj[empID] = append(adj[empID],mgrID)
+
+	visited := make(map[uint64]bool)
+	isCycleDetected := dfsDetectCycle(empID, mgrID, adj, visited)
+
+	if isCycleDetected {
+		fmt.Println("Cycle exists")
 	} else {
-		fmt.Println("No such employee-manager combination exists")
+		fmt.Println("Cycle Does Not exists")
 	}
 
 }
 
-func dfsDetectCycle(EmpId, ManagerId uint64, adj map[uint64]uint64, vis map[uint64]bool) bool {
-	if _, exists := vis[EmpId]; exists {
+func dfsDetectCycle(empId, managerId uint64, adj map[uint64][]uint64, visited map[uint64]bool) bool {
+	if _, exists := visited[empId]; exists {
 		return true
 	} else {
-		vis[EmpId] = true
+		visited[empId] = true
 	}
-	if value, exists := adj[ManagerId]; exists {
-		return dfsDetectCycle(ManagerId, value, adj, vis)
+	for _,manager:=range adj[managerId]{
+		if dfsDetectCycle(managerId,manager,adj,visited){
+			return true
+		}
 	}
 	return false
 }
