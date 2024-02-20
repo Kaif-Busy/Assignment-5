@@ -8,8 +8,8 @@ import (
 )
 
 type EmpManager struct {
-	EmpID     string
-	ManagerID string
+	EmpID     uint64
+	ManagerID uint64
 }
 
 func Connect() *pg.DB {
@@ -39,15 +39,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	m := make(map[string]interface{})
+	m := make(map[uint64]uint64)
 	for _, emp := range emps {
 		m[emp.EmpID] = emp.ManagerID
 	}
 	fmt.Println("Enter the Employee and Manager Codes:")
-	var a, b string
+	var a, b uint64
 	fmt.Scan(&a, &b)
 	if x, exists := m[a]; exists && x == b {
-		temp := make(map[string]bool)
+		temp := make(map[uint64]bool)
 		cycle := dfsDetectCycle(a, b, m, temp)
 		if cycle {
 			fmt.Println("Cycle Exists")
@@ -61,14 +61,14 @@ func main() {
 
 }
 
-func dfsDetectCycle(EmpId, ManagerId string, adj map[string]interface{}, vis map[string]bool) bool {
+func dfsDetectCycle(EmpId, ManagerId uint64, adj map[uint64]uint64, vis map[uint64]bool) bool {
 	if _, exists := vis[EmpId]; exists {
 		return true
 	} else {
 		vis[EmpId] = true
 	}
 	if value, exists := adj[ManagerId]; exists {
-		return dfsDetectCycle(ManagerId, value.(string), adj, vis)
+		return dfsDetectCycle(ManagerId, value, adj, vis)
 	}
 	return false
 }
